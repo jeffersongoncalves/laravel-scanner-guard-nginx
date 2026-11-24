@@ -66,6 +66,18 @@ it('logs instead of failing when the reload command throws (e.g. a timeout)', fu
     Log::shouldHaveReceived('error')->withArgs(fn (string $message, array $context) => str_contains($context['error'], 'timeout'));
 });
 
+it('runs a failed reload again on the next sync, until it succeeds', function () {
+    Process::fake(['*' => Process::sequence()->push(Process::result(exitCode: 1))->push(Process::result())]);
+    config(['scanner-guard-nginx.reload_command' => 'sudo nginx -s reload']);
+
+    (new NginxSink)->sync([]); // fails
+    (new NginxSink)->sync([]); // retried
+    (new NginxSink)->sync([]); // up to date
+
+    Process::assertRanTimes('sudo nginx -s reload', 2);
+    expect(File::glob(storage_path('app/scanner-guard/*.reload')))->toBe([]);
+});
+
 it('is driven by scanner-guard:sync-denylist', function () {
     config([
         'scanner-guard.driver' => 'http', // no database needed: bans come from the (empty) last pull

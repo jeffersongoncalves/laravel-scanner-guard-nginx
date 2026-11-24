@@ -23,7 +23,8 @@ return [
     |
     | nginx only re-reads an included file on reload. Runs (e.g. "sudo nginx
     | -s reload") only when the file content changed; a non-zero exit or a
-    | timeout is logged, never thrown. Null = don't reload.
+    | timeout is logged, never thrown, and the next sync runs it again.
+    | Null = don't reload.
     |
     */
     'reload_command' => env('SCANNER_GUARD_NGINX_RELOAD_COMMAND'),
